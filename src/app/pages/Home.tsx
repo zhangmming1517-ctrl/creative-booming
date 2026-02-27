@@ -7,6 +7,7 @@ import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTr
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { setRuntimeAiConfig } from "../../lib/api/aiClient";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -42,6 +43,12 @@ export default function Home() {
       const modelOptions = ["gpt-4o-mini", "gpt-4.1-mini", "moonshot-v1-8k", "deepseek-chat"];
       setModelPreset(modelOptions.includes(savedModel) ? savedModel : "custom");
     }
+
+    setRuntimeAiConfig({
+      apiKey: savedKey ?? undefined,
+      baseUrl: savedBaseUrl ?? undefined,
+      model: savedModel ?? undefined,
+    });
   }, []);
 
   const handleSaveKey = () => {
@@ -62,6 +69,12 @@ export default function Home() {
     } else {
       localStorage.removeItem("USER_AI_MODEL");
     }
+
+    setRuntimeAiConfig({
+      apiKey: apiKey.trim() || undefined,
+      baseUrl: normalizeBaseUrl(baseUrl.trim()) || undefined,
+      model: model.trim() || undefined,
+    });
 
     setTestMessage(null);
 
@@ -128,6 +141,12 @@ export default function Home() {
       localStorage.setItem("USER_AI_API_KEY", apiKey.trim());
       localStorage.setItem("USER_AI_BASE_URL", normalizeBaseUrl(baseUrl.trim()));
       localStorage.setItem("USER_AI_MODEL", model.trim());
+
+      setRuntimeAiConfig({
+        apiKey: apiKey.trim(),
+        baseUrl: normalizeBaseUrl(baseUrl.trim()),
+        model: model.trim(),
+      });
 
       setTestSuccess(true);
       setTestMessage("连接成功，配置已自动保存");
