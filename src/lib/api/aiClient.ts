@@ -20,6 +20,21 @@ export interface AiClientOptions {
   jsonMode?: boolean;
 }
 
+interface RuntimeAiConfig {
+  apiKey?: string;
+  baseUrl?: string;
+  model?: string;
+}
+
+let runtimeAiConfig: RuntimeAiConfig = {};
+
+export function setRuntimeAiConfig(config: RuntimeAiConfig) {
+  runtimeAiConfig = {
+    ...runtimeAiConfig,
+    ...config,
+  };
+}
+
 function safeLocalStorageGet(key: string): string | null {
   try {
     return localStorage.getItem(key);
@@ -37,17 +52,18 @@ function getConfig() {
   const envApiKey = import.meta.env.VITE_AI_API_KEY as string | undefined;
   // 支持用户在界面上手动输入的 Key
   const userApiKey = safeLocalStorageGet("USER_AI_API_KEY");
-  
-  const apiKey = userApiKey || envApiKey;
+
+  const apiKey = runtimeAiConfig.apiKey || userApiKey || envApiKey;
   
   // 支持用户自定义 Base URL
   const userBaseUrl = safeLocalStorageGet("USER_AI_BASE_URL");
   const envBaseUrl = import.meta.env.VITE_AI_BASE_URL as string | undefined;
 
-  const baseUrl = normalizeBaseUrl(userBaseUrl || envBaseUrl || "https://api.openai.com/v1");
+  const baseUrl = normalizeBaseUrl(runtimeAiConfig.baseUrl || userBaseUrl || envBaseUrl || "https://api.openai.com/v1");
 
+  const userModel = safeLocalStorageGet("USER_AI_MODEL");
   const model =
-    (import.meta.env.VITE_AI_MODEL as string | undefined) ?? "gpt-4o-mini";
+    runtimeAiConfig.model || userModel || (import.meta.env.VITE_AI_MODEL as string | undefined) || "gpt-4o-mini";
 
   if (!apiKey || (apiKey.startsWith("your_") && !userApiKey)) {
     throw new Error("请在主页设置 AI API Key，或联系管理员配置 .env.local");
@@ -76,27 +92,47 @@ export async function chatCompletion(
     body.response_format = { type: "json_object" };
   }
 
-  let response: Response;
-  try {
-    response = await fetch(`${baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(body),
-    });
-  } catch (error) {
-    if (error instanceof TypeError) {
-      throw new Error("网络请求失败，请检查手机网络/代理/VPN，或确认 Base URL 是否可访问");
+  const requestOnce = async (payload: Record<string, unknown>) => {
+    let response: Response;
+    try {
+      response = await fetch(`${baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(payload),
+      });
+    } catch (error) {
+      if (error instanceof TypeError) {
+        throw new Error("网络请求失败，请检查手机网络/代理/VPN，或确认 Base URL 是否可访问");
+      }
+      throw error;
     }
-    throw error;
-  }
+
+    return response;
+  };
+
+  let response = await requestOnce(body);
 
   if (!response.ok) {
     const errText = await response.text();
-    console.error(`[aiClient] ${model} API Error:`, errText);
-    throw new Error(`AI 服务请求失败 (${response.status})：${errText || "请检查 Key 与 Base URL"}`);
+    const needsTempOne =
+      response.status === 400 &&
+      /invalid temperature|only\s*1\s*is\s*allowed/i.test(errText);
+
+    if (needsTempOne && temperature !== 1) {
+      const retryBody: Record<string, unknown> = { ...body, temperature: 1 };
+      response = await requestOnce(retryBody);
+      if (!response.ok) {
+        const retryErrText = await response.text();
+        console.error(`[aiClient] ${model} API Error:`, retryErrText);
+        throw new Error(`AI 服务请求失败 (${response.status})：${retryErrText || "请检查 Key 与 Base URL"}`);
+      }
+    } else {
+      console.error(`[aiClient] ${model} API Error:`, errText);
+      throw new Error(`AI 服务请求失败 (${response.status})：${errText || "请检查 Key 与 Base URL"}`);
+    }
   }
 
   const data = await response.json();
