@@ -125,8 +125,12 @@ export default function Home() {
         throw new Error(`连接失败 (${response.status}) ${errText || "请检查配置"}`);
       }
 
+      localStorage.setItem("USER_AI_API_KEY", apiKey.trim());
+      localStorage.setItem("USER_AI_BASE_URL", normalizeBaseUrl(baseUrl.trim()));
+      localStorage.setItem("USER_AI_MODEL", model.trim());
+
       setTestSuccess(true);
-      setTestMessage("连接成功，可以开始生成内容");
+      setTestMessage("连接成功，配置已自动保存");
     } catch (error) {
       setTestSuccess(false);
       if (error instanceof TypeError) {
