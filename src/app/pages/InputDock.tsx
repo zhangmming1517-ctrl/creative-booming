@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router";
-import { Mic, Send, ChevronLeft, X, Sparkles } from "lucide-react";
+import { Mic, Send, ChevronLeft, Sparkles } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Textarea } from "../components/ui/textarea";
 import { analyzeContent } from "../../lib/api/analyzeContent";
@@ -168,8 +168,8 @@ export default function InputDock() {
   return (
     <div className="min-h-full bg-[#050505] text-white flex flex-col relative overflow-hidden font-sans">
       {/* 氛围背景装饰 */}
-      <div className="absolute top-[-15%] left-[-10%] w-[70%] h-[70%] bg-indigo-900/10 blur-[150px] rounded-full" />
-      <div className="absolute bottom-[-15%] right-[-10%] w-[70%] h-[70%] bg-purple-900/10 blur-[150px] rounded-full" />
+      <div className="pointer-events-none absolute top-[-15%] left-[-10%] w-[70%] h-[70%] bg-indigo-900/10 blur-[150px] rounded-full" />
+      <div className="pointer-events-none absolute bottom-[-15%] right-[-10%] w-[70%] h-[70%] bg-purple-900/10 blur-[150px] rounded-full" />
 
       {/* 顶部导航 */}
       <div className="z-10 flex items-center justify-between px-6 pt-[calc(env(safe-area-inset-top)+1rem)] pb-6 bg-black/40 backdrop-blur-xl border-b border-white/5">
@@ -177,7 +177,7 @@ export default function InputDock() {
           variant="ghost"
           size="icon"
           onClick={() => navigate("/")}
-          className="rounded-full bg-white/5 border border-white/10 hover:bg-white/10"
+          className="z-30 rounded-full bg-white/5 border border-white/10 hover:bg-white/10"
         >
           <ChevronLeft className="w-5 h-5" />
         </Button>
@@ -188,14 +188,7 @@ export default function InputDock() {
           </div>
           <span className="text-[9px] text-white/30 uppercase tracking-[0.2em] mt-0.5 font-bold">Inspiration Studio</span>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setInput("")}
-          className="rounded-full bg-white/5 border border-white/10 hover:bg-white/10"
-        >
-          <X className="w-4 h-4" />
-        </Button>
+        <div className="w-10" />
       </div>
 
       {/* 主输入区域 */}
@@ -244,7 +237,7 @@ export default function InputDock() {
             {/* 粒子动画容器 */}
             <AnimatePresence>
               {isRecording && (
-                <div className="absolute inset-0 flex items-center justify-center">
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                   {[...Array(particlesCount)].map((_, i) => (
                     <RecordingParticle key={i} index={i} total={particlesCount} />
                   ))}
@@ -307,11 +300,11 @@ export default function InputDock() {
               initial={{ x: 20, opacity: 0 }}
               animate={{ 
                 x: input.trim() && !isRecording ? 100 : 20, 
-                opacity: input.trim() && !isRecording ? 1 : 0,
-                pointerEvents: input.trim() && !isRecording ? "auto" : "none"
+                opacity: input.trim() && !isRecording ? 1 : 0
               }}
               onClick={handleNext}
-              className="absolute w-16 h-16 rounded-2xl bg-white text-black flex items-center justify-center shadow-2xl hover:bg-slate-100 transition-all active:scale-90"
+              style={{ pointerEvents: input.trim() && !isRecording ? "auto" : "none" }}
+              className="absolute z-30 w-16 h-16 rounded-2xl bg-white text-black flex items-center justify-center shadow-2xl hover:bg-slate-100 transition-all active:scale-90"
             >
               <Send className="w-7 h-7" />
             </motion.button>
