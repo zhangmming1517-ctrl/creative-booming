@@ -29,8 +29,8 @@ function getConfig() {
   const model =
     (import.meta.env.VITE_AI_MODEL as string | undefined) ?? "gpt-4o-mini";
 
-  if (!apiKey || apiKey.startsWith("your_")) {
-    throw new Error("请在 .env.local 中配置 VITE_AI_API_KEY");
+  if (!apiKey || apiKey.trim() === "" || apiKey.startsWith("your_")) {
+    throw new Error(`AI API Key 未正确配置。请在 .env.local 或 Vercel 环境变量中设置 VITE_AI_API_KEY。${apiKey ? "(当前值为: " + apiKey.substring(0, 5) + "...)" : ""}`);
   }
 
   return { apiKey, baseUrl, model };
