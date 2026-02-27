@@ -1,10 +1,31 @@
-import { motion } from "motion/react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router";
-import { Sparkles, Zap, Wand2, Target } from "lucide-react";
+import { Sparkles, Zap, Wand2, Target, Settings, Key } from "lucide-react";
 import { Button } from "../components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 
 export default function Home() {
   const navigate = useNavigate();
+  const [apiKey, setApiKey] = useState("");
+  const [isSettingOpen, setIsSettingOpen] = useState(false);
+
+  useEffect(() => {
+    // 初始化读取本地存储的 Key
+    const savedKey = localStorage.getItem("USER_AI_API_KEY");
+    if (savedKey) setApiKey(savedKey);
+  }, []);
+
+  const handleSaveKey = () => {
+    if (apiKey.trim()) {
+      localStorage.setItem("USER_AI_API_KEY", apiKey.trim());
+      setIsSettingOpen(false);
+    } else {
+      localStorage.removeItem("USER_AI_API_KEY");
+    }
+  };
 
   const features = [
     {
@@ -33,11 +54,47 @@ export default function Home() {
     <div className="min-h-full bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col">
       {/* Header */}
       <motion.div 
-        className="pt-[calc(env(safe-area-inset-top)+4rem)] px-6 text-center"
+        className="pt-[calc(env(safe-area-inset-top)+4rem)] px-6 text-center relative"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
+        {/* 设置按钮 */}
+        <div className="absolute top-[calc(env(safe-area-inset-top))] right-4">
+          <Dialog open={isSettingOpen} onOpenChange={setIsSettingOpen}>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm">
+                <Settings className="w-5 h-5 text-gray-700" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-[320px] rounded-2xl">
+              <DialogHeader>
+                <DialogTitle className="text-center">配置 AI 密钥</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="apiKey" className="text-left font-medium">
+                    API Key
+                  </Label>
+                  <Input
+                    id="apiKey"
+                    placeholder="sk-..."
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    className="col-span-3 text-sm"
+                  />
+                  <p className="text-[10px] text-gray-500">
+                    密钥将仅存储在您的本地浏览器中，用于直接请求 AI 服务。
+                  </p>
+                </div>
+              </div>
+              <Button onClick={handleSaveKey} className="w-full rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white">
+                保存配置
+              </Button>
+            </DialogContent>
+          </Dialog>
+        </div>
+
         <motion.div
           className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 mb-6 shadow-2xl"
           animate={{ 

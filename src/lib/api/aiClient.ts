@@ -20,14 +20,25 @@ export interface AiClientOptions {
   jsonMode?: boolean;
 }
 
-// ── 读取环境变量 ──
-function getInsecureConfig() {
-  const apiKey = import.meta.env.VITE_AI_API_KEY as string | undefined;
-  const baseUrl = (import.meta.env.VITE_AI_BASE_URL as string | undefined) ?? "https://api.openai.com/v1";
-  const model = (import.meta.env.VITE_AI_MODEL as string | undefined) ?? "gpt-4o-mini";
+// ── 读取配置（优先从 localStorage 读取用户自定义 Key，其次读环境变量） ──
+function getConfig() {
+  const envApiKey = import.meta.env.VITE_AI_API_KEY as string | undefined;
+  // 支持用户在界面上手动输入的 Key
+  const userApiKey = localStorage.getItem("USER_AI_API_KEY");
   
-  const isDummy = !apiKey || apiKey.startsWith("your_");
-  return { apiKey, baseUrl, model, isDummy };
+  const apiKey = userApiKey || envApiKey;
+  
+  const baseUrl =
+    (import.meta.env.VITE_AI_BASE_URL as string | undefined) ??
+    "https://api.openai.com/v1";
+  const model =
+    (import.meta.env.VITE_AI_MODEL as string | undefined) ?? "gpt-4o-mini";
+
+  if (!apiKey || (apiKey.startsWith("your_") && !userApiKey)) {
+    throw new Error("请在主页设置 AI API Key，或联系管理员配置 .env.local");
+  }
+
+  return { apiKey, baseUrl, model };
 }
 
 /**
@@ -37,57 +48,41 @@ export async function chatCompletion(
   messages: ChatMessage[],
   options: AiClientOptions = {}
 ): Promise<string> {
+  const { apiKey, baseUrl, model } = getConfig();
   const { temperature = 0.7, jsonMode = false } = options;
-  const config = getInsecureConfig();
 
-  // 如果本地存在 VITE_AI_API_KEY，且不是占位符，执行直接调用（仅供开发本地调试，不安全）
-  if (!config.isDummy) {
-    const response = await fetch(`${config.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${config.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: config.model,
-        messages,
-        temperature,
-        response_format: jsonMode ? { type: "json_object" } : undefined,
-      }),
-    });
+  const body: Record<string, unknown> = {
+    model,
+    messages,
+    temperature,
+  };
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error(`[aiClient-local] Error:`, errText);
-      throw new Error(`AI 请求失败 (${response.status})`);
-    }
+  if (jsonMode) {
+    body.response_format = { type: "json_object" };
+  }
 
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content ?? "";
-  } 
-
-  // ── 安全模式：通过 Vercel Serverless 后端中转 ──
-  // 解决 CORS（跨域）问题，并保护 API Key 不被泄露到浏览器前端
-  const response = await fetch("/api/chat", {
+  const response = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      messages,
-      temperature,
-      response_format: jsonMode ? { type: "json_object" } : undefined,
-    }),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
-    const errData = await response.json().catch(() => ({}));
-    console.error(`[aiClient-server] Proxy Error:`, errData);
-    throw new Error(`AI 服务暂时不可用，请确认服务器端 API Key 是否配置正确 (${response.status})`);
+    const errText = await response.text();
+    console.error(`[aiClient] ${model} API Error:`, errText);
+    throw new Error(`AI 服务请求失败 (${response.status})`);
   }
 
   const data = await response.json();
   const text: string = data.choices?.[0]?.message?.content ?? "";
 
-  if (!text) throw new Error("AI 返回内容为空，请重试");
+  if (!text) {
+    throw new Error("AI 返回内容为空，请重试");
+  }
+
   return text;
 }
 
