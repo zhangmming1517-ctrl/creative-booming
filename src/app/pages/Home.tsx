@@ -60,11 +60,11 @@ export default function Home() {
         transition={{ duration: 0.6 }}
       >
         {/* 设置按钮 */}
-        <div className="absolute top-[calc(env(safe-area-inset-top))] right-4">
+        <div className="absolute top-[calc(env(safe-area-inset-top)+1rem)] right-6">
           <Dialog open={isSettingOpen} onOpenChange={setIsSettingOpen}>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm">
-                <Settings className="w-5 h-5 text-gray-700" />
+              <Button variant="ghost" className="w-12 h-12 rounded-full bg-white/30 hover:bg-white/50 backdrop-blur-md shadow-sm p-0">
+                <Key className="w-7 h-7 text-gray-800" />
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-[320px] rounded-2xl">
