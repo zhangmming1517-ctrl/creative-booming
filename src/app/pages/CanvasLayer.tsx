@@ -89,7 +89,7 @@ export default function CanvasLayer() {
   return (
     <div className="min-h-full flex flex-col bg-gradient-to-br from-pink-50 via-rose-50 to-orange-50">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 bg-white/50 backdrop-blur-sm">
+      <div className="flex items-center justify-between px-6 pt-[calc(env(safe-area-inset-top)+1rem)] pb-6 bg-white/50 backdrop-blur-sm sticky top-0 z-20">
         <Button
           variant="ghost"
           size="icon"
@@ -334,7 +334,7 @@ export default function CanvasLayer() {
       </div>
 
       {/* Bottom Action Bar */}
-      <div className="bg-white/80 backdrop-blur-sm border-t border-gray-200 p-6">
+      <div className="bg-white/80 backdrop-blur-sm border-t border-gray-200 px-6 pt-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)]">
         <Button
           onClick={handleNext}
           className="w-full h-14 rounded-full bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 text-lg shadow-xl"

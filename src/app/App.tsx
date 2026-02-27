@@ -5,23 +5,20 @@ export default function App() {
   return (
     // 桌面端容器 + 移动端自适应
     <div className="min-h-screen bg-black flex items-center justify-center md:p-8">
-      {/* 限制容器在移动端表现为 native app 感觉，增加对 safe-area 的感知 */}
+      {/* 内容全屏化，移除多余背景，让具体页面背景填满刘海区域 */}
       <div
         className="
           relative w-full h-full
           md:w-[390px] md:h-[844px]
           md:rounded-[40px] md:shadow-2xl
           overflow-hidden
-          bg-white
         "
-        style={{ height: "100svh" }}
+        style={{ height: "100dvh" }}
       >
-        {/* 内容区，处理 iOS Notch 部分的间隙 */}
-        <div className="w-full h-full overflow-y-auto overflow-x-hidden scrollbar-none 
-          pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
+        <div className="w-full h-full overflow-y-auto overflow-x-hidden scrollbar-none"
           style={{ 
             scrollbarWidth: "none",
-            WebkitOverflowScrolling: "touch" // 添加原生滚动手感
+            WebkitOverflowScrolling: "touch"
           }}
         >
           <RouterProvider router={router} />

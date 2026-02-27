@@ -172,7 +172,7 @@ export default function InputDock() {
       <div className="absolute bottom-[-15%] right-[-10%] w-[70%] h-[70%] bg-purple-900/10 blur-[150px] rounded-full" />
 
       {/* 顶部导航 */}
-      <div className="z-10 flex items-center justify-between p-6 bg-black/40 backdrop-blur-xl border-b border-white/5">
+      <div className="z-10 flex items-center justify-between px-6 pt-[calc(env(safe-area-inset-top)+1rem)] pb-6 bg-black/40 backdrop-blur-xl border-b border-white/5">
         <Button
           variant="ghost"
           size="icon"
@@ -239,7 +239,7 @@ export default function InputDock() {
         </motion.div>
 
         {/* 底部交互控制台 */}
-        <div className="mt-16 mb-12 flex flex-col items-center">
+        <div className="mt-16 mb-12 pb-[env(safe-area-inset-bottom)] flex flex-col items-center">
           <div className="relative flex items-center justify-center">
             {/* 粒子动画容器 */}
             <AnimatePresence>

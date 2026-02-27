@@ -33,7 +33,7 @@ export default function Home() {
     <div className="min-h-full bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col">
       {/* Header */}
       <motion.div 
-        className="pt-16 px-6 text-center"
+        className="pt-[calc(env(safe-area-inset-top)+4rem)] px-6 text-center"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -90,7 +90,7 @@ export default function Home() {
 
       {/* CTA Button */}
       <motion.div 
-        className="px-6 pb-12"
+        className="px-6 pb-[calc(env(safe-area-inset-bottom)+3rem)]"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8, duration: 0.6 }}

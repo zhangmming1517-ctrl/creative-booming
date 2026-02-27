@@ -101,7 +101,7 @@ export default function BrainstormingBoard() {
   return (
     <div className="min-h-full flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 bg-white/50 backdrop-blur-sm">
+      <div className="flex items-center justify-between px-6 pt-[calc(env(safe-area-inset-top)+1rem)] pb-6 bg-white/50 backdrop-blur-sm">
         <Button
           variant="ghost"
           size="icon"
@@ -258,7 +258,7 @@ export default function BrainstormingBoard() {
       </div>
 
       {/* Bottom Action Bar */}
-      <div className="bg-white/80 backdrop-blur-sm border-t border-gray-200 p-4">
+      <div className="bg-white/80 backdrop-blur-sm border-t border-gray-200 p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
         <AnimatePresence>
           {generateError && (
             <motion.p
