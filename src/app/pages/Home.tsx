@@ -1,29 +1,54 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router";
-import { Sparkles, Zap, Wand2, Target, Settings, Key } from "lucide-react";
+import { Sparkles, Zap, Wand2, Target, Key } from "lucide-react";
 import { Button } from "../components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 
 export default function Home() {
   const navigate = useNavigate();
   const [apiKey, setApiKey] = useState("");
+  const [baseUrl, setBaseUrl] = useState("https://api.openai.com/v1");
   const [isSettingOpen, setIsSettingOpen] = useState(false);
 
   useEffect(() => {
     // 初始化读取本地存储的 Key
     const savedKey = localStorage.getItem("USER_AI_API_KEY");
     if (savedKey) setApiKey(savedKey);
+
+    const savedBaseUrl = localStorage.getItem("USER_AI_BASE_URL");
+    if (savedBaseUrl) setBaseUrl(savedBaseUrl);
   }, []);
 
   const handleSaveKey = () => {
     if (apiKey.trim()) {
       localStorage.setItem("USER_AI_API_KEY", apiKey.trim());
-      setIsSettingOpen(false);
     } else {
       localStorage.removeItem("USER_AI_API_KEY");
+    }
+
+    if (baseUrl.trim()) {
+      localStorage.setItem("USER_AI_BASE_URL", baseUrl.trim());
+    } else {
+      localStorage.removeItem("USER_AI_BASE_URL");
+    }
+
+    setIsSettingOpen(false);
+  };
+
+  const applyPreset = (provider: "openai" | "kimi" | "deepseek") => {
+    switch (provider) {
+      case "openai":
+        setBaseUrl("https://api.openai.com/v1");
+        break;
+      case "kimi":
+        setBaseUrl("https://api.moonshot.cn/v1");
+        break;
+      case "deepseek":
+        setBaseUrl("https://api.deepseek.com");
+        break;
     }
   };
 
@@ -69,28 +94,78 @@ export default function Home() {
             </DialogTrigger>
             <DialogContent className="w-[320px] max-w-[calc(100vw-3rem)] rounded-2xl p-6">
               <DialogHeader>
-                <DialogTitle className="text-center text-lg">配置 AI 密钥</DialogTitle>
+                <DialogTitle className="text-center text-lg">配置 AI 服务</DialogTitle>
               </DialogHeader>
               <div className="grid gap-4 py-4">
+                
+                {/* 快捷按钮 */}
+                <div className="flex gap-2 justify-center">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-xs h-8 px-2"
+                    onClick={() => applyPreset("kimi")}
+                  >
+                    Kimi (Moonshot)
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-xs h-8 px-2"
+                    onClick={() => applyPreset("deepseek")}
+                  >
+                    DeepSeek
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-xs h-8 px-2"
+                    onClick={() => applyPreset("openai")}
+                  >
+                    OpenAI
+                  </Button>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="baseUrl" className="text-left font-medium">
+                    Base URL (API地址)
+                  </Label>
+                  <Input
+                    id="baseUrl"
+                    placeholder="https://api.openai.com/v1"
+                    value={baseUrl}
+                    onChange={(e) => setBaseUrl(e.target.value)}
+                    className="col-span-3 h-10 text-xs"
+                  />
+                </div>
+
                 <div className="grid gap-2">
                   <Label htmlFor="apiKey" className="text-left font-medium">
-                    API Key
+                    API Key (密钥)
                   </Label>
                   <Input
                     id="apiKey"
-                    placeholder="请输入Kimi API KEY"
+                    type="password"
+                    placeholder="请输入 sk-..."
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
-                    className="col-span-3 h-10"
+                    className="col-span-3 h-10 text-xs"
                   />
-                  <p className="text-xs text-gray-500">
-                    密钥将仅存储在您的本地浏览器中，用于直接请求 AI 服务。
+                  <p className="text-[10px] text-gray-500 leading-tight">
+                    密钥仅保存在您的浏览器本地缓存中，直接请求 AI 服务提供商接口。
                   </p>
                 </div>
               </div>
-              <Button onClick={handleSaveKey} className="h-10 w-full rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium">
-                保存配置
-              </Button>
+              <div className="flex gap-2">
+                <DialogClose asChild>
+                  <Button variant="outline" className="h-10 flex-1 rounded-full">
+                    关闭
+                  </Button>
+                </DialogClose>
+                <Button onClick={handleSaveKey} className="h-10 flex-1 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium shadow-md active:scale-95 transition-transform">
+                  保存配置
+                </Button>
+              </div>
             </DialogContent>
           </Dialog>
         </div>

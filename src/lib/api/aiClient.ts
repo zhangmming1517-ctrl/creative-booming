@@ -28,9 +28,12 @@ function getConfig() {
   
   const apiKey = userApiKey || envApiKey;
   
-  const baseUrl =
-    (import.meta.env.VITE_AI_BASE_URL as string | undefined) ??
-    "https://api.openai.com/v1";
+  // 支持用户自定义 Base URL
+  const userBaseUrl = localStorage.getItem("USER_AI_BASE_URL");
+  const envBaseUrl = import.meta.env.VITE_AI_BASE_URL as string | undefined;
+
+  const baseUrl = userBaseUrl || envBaseUrl || "https://api.openai.com/v1";
+
   const model =
     (import.meta.env.VITE_AI_MODEL as string | undefined) ?? "gpt-4o-mini";
 
