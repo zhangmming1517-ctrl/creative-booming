@@ -6,12 +6,27 @@ import { Button } from "../components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 
 export default function Home() {
   const navigate = useNavigate();
   const [apiKey, setApiKey] = useState("");
   const [baseUrl, setBaseUrl] = useState("https://api.openai.com/v1");
+  const [model, setModel] = useState("gpt-4o-mini");
+  const [modelPreset, setModelPreset] = useState("gpt-4o-mini");
+  const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [testMessage, setTestMessage] = useState<string | null>(null);
+  const [testSuccess, setTestSuccess] = useState(false);
   const [isSettingOpen, setIsSettingOpen] = useState(false);
+
+  const normalizeBaseUrl = (url: string) => url.replace(/\/+$/, "");
+
+  const setModelByPreset = (preset: string) => {
+    setModelPreset(preset);
+    if (preset !== "custom") {
+      setModel(preset);
+    }
+  };
 
   useEffect(() => {
     // 初始化读取本地存储的 Key
@@ -20,6 +35,13 @@ export default function Home() {
 
     const savedBaseUrl = localStorage.getItem("USER_AI_BASE_URL");
     if (savedBaseUrl) setBaseUrl(savedBaseUrl);
+
+    const savedModel = localStorage.getItem("USER_AI_MODEL");
+    if (savedModel) {
+      setModel(savedModel);
+      const modelOptions = ["gpt-4o-mini", "gpt-4.1-mini", "moonshot-v1-8k", "deepseek-chat"];
+      setModelPreset(modelOptions.includes(savedModel) ? savedModel : "custom");
+    }
   }, []);
 
   const handleSaveKey = () => {
@@ -35,6 +57,14 @@ export default function Home() {
       localStorage.removeItem("USER_AI_BASE_URL");
     }
 
+    if (model.trim()) {
+      localStorage.setItem("USER_AI_MODEL", model.trim());
+    } else {
+      localStorage.removeItem("USER_AI_MODEL");
+    }
+
+    setTestMessage(null);
+
     setIsSettingOpen(false);
   };
 
@@ -42,13 +72,70 @@ export default function Home() {
     switch (provider) {
       case "openai":
         setBaseUrl("https://api.openai.com/v1");
+        setModelByPreset("gpt-4o-mini");
         break;
       case "kimi":
         setBaseUrl("https://api.moonshot.cn/v1");
+        setModelByPreset("moonshot-v1-8k");
         break;
       case "deepseek":
         setBaseUrl("https://api.deepseek.com");
+        setModelByPreset("deepseek-chat");
         break;
+    }
+  };
+
+  const handleTestConnection = async () => {
+    if (!apiKey.trim()) {
+      setTestSuccess(false);
+      setTestMessage("请先填写 API Key");
+      return;
+    }
+    if (!baseUrl.trim()) {
+      setTestSuccess(false);
+      setTestMessage("请先填写 Base URL");
+      return;
+    }
+    if (!model.trim()) {
+      setTestSuccess(false);
+      setTestMessage("请先选择或输入模型");
+      return;
+    }
+
+    setIsTestingConnection(true);
+    setTestMessage(null);
+
+    try {
+      const response = await fetch(`${normalizeBaseUrl(baseUrl.trim())}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey.trim()}`,
+        },
+        body: JSON.stringify({
+          model: model.trim(),
+          messages: [{ role: "user", content: "ping" }],
+          temperature: 0,
+          max_tokens: 8,
+        }),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`连接失败 (${response.status}) ${errText || "请检查配置"}`);
+      }
+
+      setTestSuccess(true);
+      setTestMessage("连接成功，可以开始生成内容");
+    } catch (error) {
+      setTestSuccess(false);
+      if (error instanceof TypeError) {
+        setTestMessage("网络不可达，请检查网络/代理/VPN，或确认 Base URL 可访问");
+      } else {
+        setTestMessage(error instanceof Error ? error.message : "连接测试失败");
+      }
+    } finally {
+      setIsTestingConnection(false);
     }
   };
 
@@ -140,6 +227,30 @@ export default function Home() {
                 </div>
 
                 <div className="grid gap-2">
+                  <Label className="text-left font-medium">模型选择</Label>
+                  <Select value={modelPreset} onValueChange={setModelByPreset}>
+                    <SelectTrigger className="h-10 text-xs">
+                      <SelectValue placeholder="请选择模型" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gpt-4o-mini">OpenAI - gpt-4o-mini</SelectItem>
+                      <SelectItem value="gpt-4.1-mini">OpenAI - gpt-4.1-mini</SelectItem>
+                      <SelectItem value="moonshot-v1-8k">Kimi - moonshot-v1-8k</SelectItem>
+                      <SelectItem value="deepseek-chat">DeepSeek - deepseek-chat</SelectItem>
+                      <SelectItem value="custom">自定义模型</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {modelPreset === "custom" && (
+                    <Input
+                      placeholder="输入自定义模型名，例如 kimi-k2-0711-preview"
+                      value={model}
+                      onChange={(e) => setModel(e.target.value)}
+                      className="h-10 text-xs"
+                    />
+                  )}
+                </div>
+
+                <div className="grid gap-2">
                   <Label htmlFor="apiKey" className="text-left font-medium">
                     API Key (密钥)
                   </Label>
@@ -155,6 +266,21 @@ export default function Home() {
                     密钥仅保存在您的浏览器本地缓存中，直接请求 AI 服务提供商接口。
                   </p>
                 </div>
+
+                <Button
+                  variant="outline"
+                  onClick={handleTestConnection}
+                  disabled={isTestingConnection}
+                  className="h-10 rounded-full text-xs"
+                >
+                  {isTestingConnection ? "测试中..." : "测试链接"}
+                </Button>
+
+                {testMessage && (
+                  <p className={`text-xs text-center ${testSuccess ? "text-green-600" : "text-red-500"}`}>
+                    {testMessage}
+                  </p>
+                )}
               </div>
               <div className="flex gap-2">
                 <DialogClose asChild>
