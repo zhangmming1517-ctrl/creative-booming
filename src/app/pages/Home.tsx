@@ -115,7 +115,7 @@ export default function Home() {
         body: JSON.stringify({
           model: model.trim(),
           messages: [{ role: "user", content: "ping" }],
-          temperature: 0,
+          temperature: 1,
           max_tokens: 8,
         }),
       });
