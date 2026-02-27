@@ -20,19 +20,31 @@ export interface AiClientOptions {
   jsonMode?: boolean;
 }
 
+function safeLocalStorageGet(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function normalizeBaseUrl(url: string): string {
+  return url.replace(/\/+$/, "");
+}
+
 // ── 读取配置（优先从 localStorage 读取用户自定义 Key，其次读环境变量） ──
 function getConfig() {
   const envApiKey = import.meta.env.VITE_AI_API_KEY as string | undefined;
   // 支持用户在界面上手动输入的 Key
-  const userApiKey = localStorage.getItem("USER_AI_API_KEY");
+  const userApiKey = safeLocalStorageGet("USER_AI_API_KEY");
   
   const apiKey = userApiKey || envApiKey;
   
   // 支持用户自定义 Base URL
-  const userBaseUrl = localStorage.getItem("USER_AI_BASE_URL");
+  const userBaseUrl = safeLocalStorageGet("USER_AI_BASE_URL");
   const envBaseUrl = import.meta.env.VITE_AI_BASE_URL as string | undefined;
 
-  const baseUrl = userBaseUrl || envBaseUrl || "https://api.openai.com/v1";
+  const baseUrl = normalizeBaseUrl(userBaseUrl || envBaseUrl || "https://api.openai.com/v1");
 
   const model =
     (import.meta.env.VITE_AI_MODEL as string | undefined) ?? "gpt-4o-mini";
@@ -64,23 +76,32 @@ export async function chatCompletion(
     body.response_format = { type: "json_object" };
   }
 
-  const response = await fetch(`${baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(body),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error("网络请求失败，请检查手机网络/代理/VPN，或确认 Base URL 是否可访问");
+    }
+    throw error;
+  }
 
   if (!response.ok) {
     const errText = await response.text();
     console.error(`[aiClient] ${model} API Error:`, errText);
-    throw new Error(`AI 服务请求失败 (${response.status})`);
+    throw new Error(`AI 服务请求失败 (${response.status})：${errText || "请检查 Key 与 Base URL"}`);
   }
 
   const data = await response.json();
-  const text: string = data.choices?.[0]?.message?.content ?? "";
+  const content = data?.choices?.[0]?.message?.content;
+  const text = typeof content === "string" ? content : "";
 
   if (!text) {
     throw new Error("AI 返回内容为空，请重试");
