@@ -8,8 +8,8 @@ export default function App() {
       {/* 内容全屏化，移除多余背景，让具体页面背景填满刘海区域 */}
       <div
         className="
-          relative w-full h-full
-          md:w-[390px] md:h-[844px]
+          relative w-full max-w-[400px] h-full
+          md:h-[844px]
           md:rounded-[40px] md:shadow-2xl
           overflow-hidden
         "

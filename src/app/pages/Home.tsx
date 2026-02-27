@@ -67,9 +67,9 @@ export default function Home() {
                 <Key className="w-7 h-7 text-gray-800" />
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[320px] rounded-2xl">
+            <DialogContent className="w-[320px] max-w-[calc(100vw-3rem)] rounded-2xl p-6">
               <DialogHeader>
-                <DialogTitle className="text-center">配置 AI 密钥</DialogTitle>
+                <DialogTitle className="text-center text-lg">配置 AI 密钥</DialogTitle>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
@@ -78,17 +78,17 @@ export default function Home() {
                   </Label>
                   <Input
                     id="apiKey"
-                    placeholder="sk-..."
+                    placeholder="请输入Kimi API KEY"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
-                    className="col-span-3 text-sm"
+                    className="col-span-3 h-10"
                   />
-                  <p className="text-[10px] text-gray-500">
+                  <p className="text-xs text-gray-500">
                     密钥将仅存储在您的本地浏览器中，用于直接请求 AI 服务。
                   </p>
                 </div>
               </div>
-              <Button onClick={handleSaveKey} className="w-full rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white">
+              <Button onClick={handleSaveKey} className="h-10 w-full rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium">
                 保存配置
               </Button>
             </DialogContent>
