@@ -2,7 +2,27 @@
 @import './tailwind.css';
 @import './theme.css';
 
-/* 隐藏滚动条（手机壳内容区） */
+:root {
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+body {
+  overscroll-behavior-y: none;
+  background-color: #000;
+  user-select: none;
+}
+
+input, textarea {
+  user-select: text;
+}
+
+/* 隐藏滚动条（内容区） */
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
@@ -10,3 +30,12 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* 适配 iOS SafeArea 的共通辅助类 */
+.pb-safe {
+  padding-bottom: var(--safe-area-inset-bottom);
+}
+.pt-safe {
+  padding-top: var(--safe-area-inset-top);
+}
+
